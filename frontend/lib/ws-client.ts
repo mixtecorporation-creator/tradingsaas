@@ -7,6 +7,10 @@ class WebSocketClient {
   private handlers = new Map<string, Set<MessageHandler>>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
+  isConnected(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN;
+  }
+
   connect(path: string) {
     if (this.ws?.readyState === WebSocket.OPEN) return;
 
@@ -41,12 +45,12 @@ class WebSocketClient {
     this.ws = null;
   }
 
-  on(type: string, handler: MessageHandler) {
+  on(type: string, handler: MessageHandler): () => void {
     if (!this.handlers.has(type)) {
       this.handlers.set(type, new Set());
     }
     this.handlers.get(type)!.add(handler);
-    return () => this.handlers.get(type)?.delete(handler);
+    return () => { this.handlers.get(type)?.delete(handler); };
   }
 
   send(data: Record<string, unknown>) {

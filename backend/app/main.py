@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.database import engine, async_session
+from app.database import engine, async_session_factory as async_session
 from app.models.base import Base
 from app.redis import close_redis
 from app.api.v1.router import router as v1_router

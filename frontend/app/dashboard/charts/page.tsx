@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { api } from "@/lib/api-client";
 import { wsClient } from "@/lib/ws-client";
 import { useInstruments, useOHLCV } from "@/hooks/use-instruments";
 import { PriceChart } from "@/components/charts/price-chart";
@@ -14,16 +13,16 @@ export default function ChartsPage() {
   const [timeframe, setTimeframe] = useState("1d");
   const [liveCandle, setLiveCandle] = useState<OHLCV | null>(null);
   const [connected, setConnected] = useState(false);
-  const wsRef = useRef(false);
+  const mountedRef = useRef(false);
 
   const { data: instruments } = useInstruments();
   const { data: ohlcv, isLoading } = useOHLCV(selectedSymbol, timeframe, 200);
 
   useEffect(() => {
-    if (wsRef.current) return;
-    wsRef.current = true;
+    if (mountedRef.current) return;
+    mountedRef.current = true;
 
-    const unsubCandle = wsClient.on("candle", (data) => {
+    const unsub = wsClient.on("candle", (data) => {
       const c = data as OHLCV & { symbol: string; timeframe: string };
       if (c.symbol === selectedSymbol) {
         setLiveCandle({
@@ -37,19 +36,14 @@ export default function ChartsPage() {
       }
     });
 
-    wsClient.connect(`/market/${selectedSymbol}`);
-    setConnected(true);
-
-    const interval = setInterval(() => {
-      wsClient.send({ type: "ping" });
-    }, 30000);
+    const checkConnected = setInterval(() => {
+      setConnected(wsClient.isConnected());
+    }, 2000);
 
     return () => {
-      unsubCandle();
-      clearInterval(interval);
-      wsClient.disconnect();
-      wsRef.current = false;
-      setConnected(false);
+      unsub();
+      clearInterval(checkConnected);
+      mountedRef.current = false;
     };
   }, [selectedSymbol]);
 

@@ -15,27 +15,24 @@ export function PriceTicker({ symbols }: Props) {
 
   useEffect(() => {
     if (connectedRef.current) return;
+    if (symbols.length === 0) return;
     connectedRef.current = true;
 
-    const unsubs = symbols.map((symbol) =>
-      wsClient.on("tick", (data) => {
-        const tick = data as LivePrice;
-        if (symbols.includes(tick.symbol)) {
-          setPrices((prev) => {
-            const next = new Map(prev);
-            next.set(tick.symbol, tick);
-            return next;
-          });
-        }
-      })
-    );
-
-    symbols.forEach((s) => {
-      wsClient.connect(`/market/${s}`);
+    const unsub = wsClient.on("tick", (data) => {
+      const tick = data as LivePrice;
+      if (symbols.includes(tick.symbol)) {
+        setPrices((prev) => {
+          const next = new Map(prev);
+          next.set(tick.symbol, tick);
+          return next;
+        });
+      }
     });
 
+    wsClient.connect("/market");
+
     return () => {
-      unsubs.forEach((u) => u());
+      unsub();
       wsClient.disconnect();
       connectedRef.current = false;
     };

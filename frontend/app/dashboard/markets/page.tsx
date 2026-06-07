@@ -10,7 +10,6 @@ export default function MarketsPage() {
   const [prices, setPrices] = useState<LivePrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const wsRef = useRef(false);
 
   useEffect(() => {
     api.get<LivePrice[]>("/instruments/live")
@@ -20,24 +19,14 @@ export default function MarketsPage() {
   }, []);
 
   useEffect(() => {
-    if (wsRef.current) return;
-    wsRef.current = true;
-
     const unsub = wsClient.on("tick", (data) => {
       const tick = data as LivePrice;
       setPrices((prev) =>
         prev.map((p) => (p.symbol === tick.symbol ? tick : p)),
       );
     });
-
-    prices.forEach((p) => wsClient.connect(`/market/${p.symbol}`));
-
-    return () => {
-      unsub();
-      wsClient.disconnect();
-      wsRef.current = false;
-    };
-  }, [prices.length]);
+    return () => unsub();
+  }, []);
 
   const filtered = prices.filter(
     (p) =>

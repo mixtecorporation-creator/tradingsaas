@@ -79,3 +79,14 @@ async def market_ws(ws: WebSocket, symbol: str):
             data = await ws.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(room, ws)
+
+
+@ws_router.websocket("/ws/market")
+async def market_all_ws(ws: WebSocket):
+    room = "market:all"
+    await manager.connect(room, ws)
+    try:
+        while True:
+            data = await ws.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(room, ws)

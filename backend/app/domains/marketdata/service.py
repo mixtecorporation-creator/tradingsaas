@@ -132,6 +132,7 @@ class MarketDataService:
                         data = tick.model_dump(mode="json")
                         data["type"] = "tick"
                         await self._manager.broadcast(f"market:{tick.symbol}", data)
+                        await self._manager.broadcast("market:all", data)
 
                         candle_data = {
                             "type": "candle",
@@ -145,6 +146,7 @@ class MarketDataService:
                             "timestamp": now.isoformat(),
                         }
                         await self._manager.broadcast(f"market:{tick.symbol}", candle_data)
+                        await self._manager.broadcast("market:all", candle_data)
 
             except asyncio.CancelledError:
                 break
